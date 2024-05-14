@@ -1,0 +1,77 @@
+version: '3'
+services:
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+  
+  mysql:
+    image: mysql:5.7
+    restart: always
+    environment:
+      MYSQL_DATABASE: 'project'
+      MYSQL_USER: 'user'
+      MYSQL_PASSWORD: '12345'
+      MYSQL_ROOT_PASSWORD: '12345'
+    ports:
+      - '3306:3306'
+    
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: 'rabbitmq'
+    ports:
+        - 5672:5672
+        - 15672:15672
+    volumes:
+        - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
+        - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq
+    networks:
+        - node-network
+
+  node-app:
+    build: .
+    image: node-app
+    environment:
+      - MYSQL_HOST=localhost
+      - MYSQL_USER=user
+      - MYSQL_PASSWORD=12345
+      - MYSQL_DATABASE=project
+      - MONGODB_URL=mongodb://localhost:27017/project
+    ports:
+      - '8085:8085'
+    depends_on:
+      - mysql
+      - mongodb
+    volumes:
+      - .:/src
+    networks:
+      - node-network
+
+  mongodb:
+    image: mongo:6-jammy
+    ports:
+      - '27017:27017'
+    volumes:
+      - my-db:/data/db
+    networks:
+      - node-network
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: pma
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_ARBITRARY: 1
+    restart: always
+    ports:
+      - 8081:80
+    networks:
+      - node-network
+      
+volumes:
+  my-db:
+
+networks:
+  node-network:
+    driver: bridge

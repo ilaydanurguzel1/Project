@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: rs-rmq
+spec:
+  selector:
+    matchLabels:
+      app: rs-rmq
+  serviceName: "rs-rmq"
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: rs-rmq
+    spec:
+      containers:
+      - name: rs-rmq
+        image: rabbitmq:management
+        ports:
+        - containerPort: 25672
+        - containerPort: 5672
+        - containerPort: 4369
+        - containerPort: 15672
